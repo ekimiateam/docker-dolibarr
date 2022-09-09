@@ -10,12 +10,16 @@ Docker image for Dolibarr with auto installer on first boot.
 * 12.0.5-php7.4 12.0.5 12
 * 13.0.4-php7.4 13.0.4 13
 * 14.0.5-php7.4 14.0.5 14
-* 15.0.2-php7.4 15.0.2 15 latest
+* 15.0.3-php7.4 15.0.3 15 latest
 * develop
 
 **End of support for PHP < 7.3**
 
 **Dolibarr versions 7, 8 no more updated**
+
+## Supported architectures
+
+Linux x86-64 (`amd64`), ARMv7 32-bit (`arm32v7` :warning: MariaDB/Mysql docker images don't support it) and ARMv8 64-bit (`arm64v8`)
 
 ## What is Dolibarr ?
 
@@ -115,6 +119,9 @@ When setup this way, to upgrade version the use of the web interface is mandator
 | **DOLI_LDAP_BIND_DN**         |                                | The complete DN of the user with read access on users
 | **DOLI_LDAP_BIND_PASS**       |                                | The password of the bind user
 | **DOLI_LDAP_DEBUG**           | *false*                        | Activate debug mode
+| **DOLI_CRON**                 | *0*                            | 1: Enable cron service
+| **DOLI_CRON_KEY**             |                                | Security key launch cron jobs
+| **DOLI_CRON_USER**            |                                | Dolibarr user used for cron jobs
 
 Some environment variables are compatible with docker secrets behaviour, just add the `_FILE` suffix to var name and point the value file to read.
 Environment variables that are compatible with docker secrets:

@@ -103,7 +103,7 @@ function waitForDataBase()
   r=1
 
   while [[ ${r} -ne 0 ]]; do
-    mysql -u ${DOLI_DB_USER} --protocol tcp -p${DOLI_DB_PASSWORD} -h ${DOLI_DB_HOST} -P ${DOLI_DB_HOST_PORT} -e "status" > /dev/null 2>&1
+    mysql -u ${DOLI_DB_USER} --protocol tcp -p${DOLI_DB_PASSWORD} -h ${DOLI_DB_HOST} -P ${DOLI_DB_HOST_PORT} --connect-timeout=5 -e "status" > /dev/null 2>&1
     r=$?
     if [[ ${r} -ne 0 ]]; then
       echo "Waiting that SQL database is up ..."
@@ -157,6 +157,7 @@ function initializeDatabase()
   mysql -u ${DOLI_DB_USER} -p${DOLI_DB_PASSWORD} -h ${DOLI_DB_HOST} -P ${DOLI_DB_HOST_PORT} ${DOLI_DB_NAME} -e "DELETE FROM llx_const WHERE name='MAIN_LANG_DEFAULT';" > /dev/null 2>&1
   mysql -u ${DOLI_DB_USER} -p${DOLI_DB_PASSWORD} -h ${DOLI_DB_HOST} -P ${DOLI_DB_HOST_PORT} ${DOLI_DB_NAME} -e "INSERT INTO llx_const(name,value,type,visible,note,entity) values('MAIN_VERSION_LAST_INSTALL', '${DOLI_VERSION}', 'chaine', 0, 'Dolibarr version when install', 0);" > /dev/null 2>&1
   mysql -u ${DOLI_DB_USER} -p${DOLI_DB_PASSWORD} -h ${DOLI_DB_HOST} -P ${DOLI_DB_HOST_PORT} ${DOLI_DB_NAME} -e "INSERT INTO llx_const(name,value,type,visible,note,entity) VALUES ('MAIN_LANG_DEFAULT', 'auto', 'chaine', 0, 'Default language', 1);" > /dev/null 2>&1
+  mysql -u ${DOLI_DB_USER} -p${DOLI_DB_PASSWORD} -h ${DOLI_DB_HOST} -P ${DOLI_DB_HOST_PORT} ${DOLI_DB_NAME} -e "INSERT INTO llx_const(name,value,type,visible,note,entity) VALUES ('SYSTEMTOOLS_MYSQLDUMP', '/usr/bin/mysqldump', 'chaine', 0, '', 0);" > /dev/null 2>&1
 }
 
 function migrateDatabase()
@@ -198,7 +199,7 @@ function run()
   initDolibarr
   echo "Current Version is : ${DOLI_VERSION}"
 
-  if [[ ${DOLI_INSTALL_AUTO} -eq 1 && ! -f /var/www/documents/install.lock && ${DOLI_DB_TYPE} != "pgsql" ]]; then
+  if [[ ${DOLI_INSTALL_AUTO} -eq 1 && ${DOLI_CRON} -ne 1 && ! -f /var/www/documents/install.lock && ${DOLI_DB_TYPE} != "pgsql" ]]; then
     waitForDataBase
 
     mysql -u ${DOLI_DB_USER} -p${DOLI_DB_PASSWORD} -h ${DOLI_DB_HOST} -P ${DOLI_DB_HOST_PORT} ${DOLI_DB_NAME} -e "SELECT Q.LAST_INSTALLED_VERSION FROM (SELECT INET_ATON(CONCAT(value, REPEAT('.0', 3 - CHAR_LENGTH(value) + CHAR_LENGTH(REPLACE(value, '.', ''))))) as VERSION_ATON, value as LAST_INSTALLED_VERSION FROM llx_const WHERE name IN ('MAIN_VERSION_LAST_INSTALL', 'MAIN_VERSION_LAST_UPGRADE') and entity=0) Q ORDER BY VERSION_ATON DESC LIMIT 1" > /tmp/lastinstall.result 2>&1
@@ -229,6 +230,13 @@ DOLI_ADMIN_PASSWORD=$(get_env_value 'DOLI_ADMIN_PASSWORD' 'admin')
 run
 
 set -e
+
+if [[ ${DOLI_CRON} -eq 1 ]]; then
+    echo "PATH=\$PATH:/usr/local/bin" > /etc/cron.d/dolibarr
+    echo "*/5 * * * * www-data /var/www/scripts/cron/cron_run_jobs.php ${DOLI_CRON_KEY} ${DOLI_CRON_USER} > /var/www/documents/cron_run_jobs.php.log 2>&1" >> /etc/cron.d/dolibarr
+    cron -f
+    exit 0
+fi
 
 if [ "${1#-}" != "$1" ]; then
   set -- apache2-foreground "$@"
