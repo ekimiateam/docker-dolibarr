@@ -1,10 +1,10 @@
 ARG ARCH=
 
-FROM ${ARCH}php:8.2-apache-buster
+FROM ${ARCH}php:8.1-apache-buster
 
 LABEL maintainer="Garcia MICHEL <garcia@soamichel.fr>"
 
-ENV DOLI_VERSION develop
+ENV DOLI_VERSION 18.0.5
 ENV DOLI_INSTALL_AUTO 1
 ENV DOLI_PROD 1
 

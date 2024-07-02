@@ -27,7 +27,9 @@ for dolibarrVersion in "${DOLIBARR_VERSIONS[@]}"; do
 
   # Mapping version according https://wiki.dolibarr.org/index.php/Versions
   # Regarding PHP Supported version : https://www.php.net/supported-versions.php
-  if [ "${dolibarrVersion}" = "develop" ] || [ "${dolibarrMajor}" -ge "16" ]; then
+  if [ "${dolibarrVersion}" = "develop" ] || [ "${dolibarrMajor}" -ge "19" ]; then
+    php_base_images=( "8.2-apache-buster" )
+  elif [ "${dolibarrMajor}" -ge "16" ]; then
     php_base_images=( "8.1-apache-buster" )
   else
     php_base_images=( "7.4-apache-buster" )
@@ -58,8 +60,8 @@ for dolibarrVersion in "${DOLIBARR_VERSIONS[@]}"; do
     sed 's/%DOLI_VERSION%/'"${dolibarrVersion}"'/;' \
     > "${dir}/Dockerfile"
 
-    cp "${BASE_DIR}/docker-init.php" "${dir}/docker-init.php"
-    cp "${BASE_DIR}/docker-run.sh" "${dir}/docker-run.sh"
+    cp -a "${BASE_DIR}/docker-init.php" "${dir}/docker-init.php"
+    cp -a "${BASE_DIR}/docker-run.sh" "${dir}/docker-run.sh"
 
     if [ "${DOCKER_BUILD}" = "1" ]; then
       if [ "${DOCKER_PUSH}" = "1" ]; then
